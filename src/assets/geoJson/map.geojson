@@ -1,0 +1,27 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "stroke": "red",
+                "stroke-width": 2,
+                "stroke-opacity": 1,
+                "name": "拉拉"
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [
+                    [
+                        121.2451171875,
+                        24.666986385216273
+                    ],
+                    [
+                        120.95947265624999,
+                        24.246964554300924
+                    ]
+                ]
+            }
+        }
+    ]
+}
