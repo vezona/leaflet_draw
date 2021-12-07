@@ -32,14 +32,13 @@ export default {
 
     // 取上傳檔案
     const uploadFile = (e)=> {
-      console.log(e.target.files);
       let file = e.target.files[0]; // Blob
       let reader = new FileReader();
       reader.readAsText(file); // 帶入Blob，轉換成text
 
       reader.onload = ()=> {
         // console.log('讀取結束', reader.result);
-        data.value.features.push(JSON.parse(reader.result)) // 讀取結果轉成JSON格式
+        data.value.features.push(JSON.parse(reader.result))  // 讀取結果轉成JSON格式
       };
     }
 
@@ -61,30 +60,13 @@ export default {
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", 
                     { attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>contributors'}
                   ).addTo(map);
-
-      // 監聽是否上傳檔案
-      watch(data.value.features, () => {
-        data.value.features.map(d=>{
-          // L.geoJSON(d).addTo(map);
-          const layer = L.geoJSON(d)
-          drawnItems.addLayer(layer) // 綁定上draw的圖層
-        })
-      })
-
-      // 可拖曳的marker
-      const point = L.marker([25.0263064, 121.5262934], {
-          draggable:true,
-          autoPan: true,
-          autoPanPadding: [200, 200],
-          autoPanSpeed: 25
-      }).addTo(map);
-
-      data.value.features.push(point.toGeoJSON())
-      // console.log('toGeoJSON', point.toGeoJSON());
-
+      
       // leaflet-draw
+      // 圖層
       const drawnItems = new L.FeatureGroup();
       map.addLayer(drawnItems);
+
+      // toolbar
       const drawControl = new L.Control.Draw({
         position: 'topright',
         draw:{
@@ -96,22 +78,46 @@ export default {
       });
       map.addControl(drawControl);
 
-      map.on(L.Draw.Event.CREATED, function (e) {
-          console.log('建立', e);
-          // console.log(e.layerType);
-          var layer = e.layer;
-          drawnItems.addLayer(layer);  // 加入畫完的圖層
-          data.value.features.push(layer.toGeoJSON()) // 加入GeoJSON
+      // 加上點點
+      // const point = L.marker([25.0263064, 121.5262934], {
+      //     draggable:true,
+      //     autoPan: true,
+      //     autoPanPadding: [200, 200],
+      //     autoPanSpeed: 25
+      // })
+      // drawnItems.addLayer(point); 
 
+      map.on(L.Draw.Event.CREATED, function (e) {
+        console.log('建立', e);
+        // console.log(e.layerType);
+        var layer = e.layer;
+        drawnItems.addLayer(layer);  // 加入畫完的圖層
+        // data.value.features.push(layer.toGeoJSON()) // 加入GeoJSON
+        console.log(JSON.stringify(drawnItems.toGeoJSON()));
+        // data.value = JSON.stringify(drawnItems.toGeoJSON())
       });
 
       map.on(L.Draw.Event.EDITED, function (e) {
-          console.log('編輯',e.layers.toGeoJSON());
-          // console.log(e.layerType);
-          // var layer = e.layer;
-          // drawnItems.addLayer(layer);  // 加入畫完的圖層
-          // data.value.features.push(layer.toGeoJSON()) // 加入GeoJSON
+         const layers = e.layers;
+         layers.eachLayer(function (layer) {
+           console.log(layer.toGeoJSON());
+         });
+          console.log(JSON.stringify(drawnItems.toGeoJSON()));
+          data.value = JSON.stringify(drawnItems.toGeoJSON())
       });
+
+
+      // 監聽是否上傳檔案
+      watch(data.value.features, () => {
+        data.value.features.map( d => {
+          const layer = L.geoJSON(d, { onEachFeature: onEachFeature })
+        })
+      })
+
+      // 上傳的geoJson綁定上drawnItems 圖層
+      function onEachFeature(feature, layer){
+         drawnItems.addLayer(layer);
+      }
     }
 
 
