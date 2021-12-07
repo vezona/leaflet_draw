@@ -7,6 +7,8 @@
       <p>GeoJSON 資料</p>
       <p class="text" >{{data}}</p>
     </div>
+        <!-- 下載 -->
+    <a :href="jsonObj" download="data.geojson" class="downloadGeoJSON" @click="downloadFile">下載GeoJSON檔案</a>
   </div>
 </div>
 
@@ -23,12 +25,14 @@ import 'leaflet-draw/dist/leaflet.draw.css'
 
 export default {
   setup() {
-    // 取上傳檔案
     const data = ref({
        "type": "FeatureCollection",
        "features": []
     })
+
+    // 取上傳檔案
     const uploadFile = (e)=> {
+      console.log(e.target.files);
       let file = e.target.files[0]; // Blob
       let reader = new FileReader();
       reader.readAsText(file); // 帶入Blob，轉換成text
@@ -37,6 +41,12 @@ export default {
         // console.log('讀取結束', reader.result);
         data.value.features.push(JSON.parse(reader.result)) // 讀取結果轉成JSON格式
       };
+    }
+
+    // 下載檔案
+    const jsonObj = ref()
+    const downloadFile = ()=>{
+      jsonObj.value = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data.value));
     }
 
     // 地圖
@@ -57,7 +67,7 @@ export default {
         data.value.features.map(d=>{
           // L.geoJSON(d).addTo(map);
           const layer = L.geoJSON(d)
-          // drawnItems.addLayer(layer) // 綁定上draw的圖層
+          drawnItems.addLayer(layer) // 綁定上draw的圖層
         })
       })
 
@@ -112,7 +122,9 @@ export default {
 
     return {
       data,
-      uploadFile
+      uploadFile,
+      jsonObj,
+      downloadFile,
 
     }
   }
@@ -139,6 +151,17 @@ export default {
 
 .geoJson{
   padding-top: 10px;
+}
+
+.downloadGeoJSON{
+  display: inline-block;
+  background-color: #eee;
+  text-decoration: none;
+  color:black;
+  padding:5px;
+  margin:10px;
+  border:1px solid black;
+  border-radius: 2px;
 }
 
 </style>
