@@ -78,34 +78,25 @@ export default {
       });
       map.addControl(drawControl);
 
-      // 加上點點
-      // const point = L.marker([25.0263064, 121.5262934], {
-      //     draggable:true,
-      //     autoPan: true,
-      //     autoPanPadding: [200, 200],
-      //     autoPanSpeed: 25
-      // })
-      // drawnItems.addLayer(point); 
-
+      // 建立
       map.on(L.Draw.Event.CREATED, function (e) {
-        console.log('建立', e);
-        // console.log(e.layerType);
         var layer = e.layer;
         drawnItems.addLayer(layer);  // 加入畫完的圖層
-        // data.value.features.push(layer.toGeoJSON()) // 加入GeoJSON
         console.log(JSON.stringify(drawnItems.toGeoJSON()));
-        // data.value = JSON.stringify(drawnItems.toGeoJSON())
+        // const geoJson = JSON.stringify(drawnItems.toGeoJSON().features)
+        // data.value.features.push(JSON.stringify(drawnItems.toGeoJSON()))
+        data.value = JSON.stringify(drawnItems.toGeoJSON()) 
       });
 
+      // 編輯
       map.on(L.Draw.Event.EDITED, function (e) {
          const layers = e.layers;
-         layers.eachLayer(function (layer) {
-           console.log(layer.toGeoJSON());
-         });
+        //  layers.eachLayer(function (layer) {
+        //    console.log(layer.toGeoJSON());
+        //  });
           console.log(JSON.stringify(drawnItems.toGeoJSON()));
           data.value = JSON.stringify(drawnItems.toGeoJSON())
       });
-
 
       // 監聽是否上傳檔案
       watch(data.value.features, () => {
@@ -114,11 +105,12 @@ export default {
         })
       })
 
-      // 上傳的geoJson綁定上drawnItems 圖層
+      // 上傳的 geoJson 綁定上 drawnItems 圖層
       function onEachFeature(feature, layer){
          drawnItems.addLayer(layer);
       }
     }
+
 
 
     // 綁定DOM
@@ -130,7 +122,7 @@ export default {
       data,
       uploadFile,
       jsonObj,
-      downloadFile,
+      downloadFile
 
     }
   }
