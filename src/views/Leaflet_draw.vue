@@ -3,21 +3,14 @@
   <div id="map"></div>
   <div class="geoJson_info">
     <input type="file" @change="uploadFile">
-    <div class="geoJson">
-      <p>GeoJSON 資料</p>
-      <p class="text" >{{data}}</p>
-    </div>
-        <!-- 下載 -->
     <a :href="jsonObj" download="data.geojson" class="downloadGeoJSON" @click="downloadFile">下載GeoJSON檔案</a>
   </div>
 </div>
-
-
 </template>
 
 <script>
 import '../assets/scss/_reset.scss'
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import "leaflet-draw"
@@ -25,31 +18,8 @@ import 'leaflet-draw/dist/leaflet.draw.css'
 
 export default {
   setup() {
-    const data = ref({
-       "type": "FeatureCollection",
-       "features": []
-    })
-
-    // 取上傳檔案
-    const uploadFile = (e)=> {
-      let file = e.target.files[0]; // Blob
-      let reader = new FileReader();
-      reader.readAsText(file); // 帶入Blob，轉換成text
-
-      reader.onload = ()=> {
-        // console.log('讀取結束', reader.result);
-        data.value.features.push(JSON.parse(reader.result))  // 讀取結果轉成JSON格式
-      };
-    }
-
-    // 下載檔案
-    const jsonObj = ref()
-    const downloadFile = ()=>{
-      jsonObj.value = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data.value));
-    }
-
     // 地圖
-    let map;
+    let map, drawnItems;
     const mapInit = () => {
       map = L.map("map", {
         center: [25.0263064, 121.5262934],
@@ -62,9 +32,8 @@ export default {
                   ).addTo(map);
       
       // leaflet-draw
-      // 圖層
-      const drawnItems = new L.FeatureGroup();
-      map.addLayer(drawnItems);
+      drawnItems = new L.FeatureGroup()
+      drawnItems.addTo(map);
 
       // toolbar
       const drawControl = new L.Control.Draw({
@@ -79,39 +48,36 @@ export default {
       map.addControl(drawControl);
 
       // 建立
-      map.on(L.Draw.Event.CREATED, function (e) {
-        var layer = e.layer;
+      map.on('draw:created', function (e) {
+        const layer = e.layer;
         drawnItems.addLayer(layer);  // 加入畫完的圖層
-        console.log(JSON.stringify(drawnItems.toGeoJSON()));
-        // const geoJson = JSON.stringify(drawnItems.toGeoJSON().features)
-        // data.value.features.push(JSON.stringify(drawnItems.toGeoJSON()))
-        data.value = JSON.stringify(drawnItems.toGeoJSON()) 
       });
-
-      // 編輯
-      map.on(L.Draw.Event.EDITED, function (e) {
-         const layers = e.layers;
-        //  layers.eachLayer(function (layer) {
-        //    console.log(layer.toGeoJSON());
-        //  });
-          console.log(JSON.stringify(drawnItems.toGeoJSON()));
-          data.value = JSON.stringify(drawnItems.toGeoJSON())
-      });
-
-      // 監聽是否上傳檔案
-      watch(data.value.features, () => {
-        data.value.features.map( d => {
-          const layer = L.geoJSON(d, { onEachFeature: onEachFeature })
-        })
-      })
-
-      // 上傳的 geoJson 綁定上 drawnItems 圖層
-      function onEachFeature(feature, layer){
-         drawnItems.addLayer(layer);
-      }
     }
 
+    // 取上傳檔案
+    const uploadFile = (e) => {
+      let file = e.target.files[0]; // Blob
+      let reader = new FileReader();
+      reader.readAsText(file); // 帶入Blob，轉換成text
 
+      reader.onload = () => {
+        // console.log('讀取結束', reader.result);
+        const result =  JSON.parse(reader.result)
+        L.geoJSON(result, { onEachFeature: onEachFeature }) // onEachFeature 會遍歷每一個新建的 layer
+      };
+    }
+
+    // 上傳的 geoJson 綁定上 drawnItems 圖層
+    function onEachFeature (feature, layer){
+      // console.log(layer);
+      drawnItems.addLayer(layer);
+    }
+
+    // 下載檔案
+    const jsonObj = ref()
+    const downloadFile = () => {
+      jsonObj.value = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(drawnItems.toGeoJSON()));
+    }
 
     // 綁定DOM
     onMounted(() => {
@@ -119,7 +85,6 @@ export default {
     })
 
     return {
-      data,
       uploadFile,
       jsonObj,
       downloadFile
